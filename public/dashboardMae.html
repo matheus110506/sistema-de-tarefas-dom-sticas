@@ -129,19 +129,44 @@ async function carregarTarefas() {
     const lista = document.getElementById('listaTarefas');
     lista.innerHTML = '';
 
-tarefas.forEach(tarefa => {
-    const li = document.createElement('li');
+    tarefas.forEach(tarefa => {
+        const li = document.createElement('li');
 
-    let status = tarefa.concluida ? "Concluída" : "Pendente";
+        let status = tarefa.concluida ? "Concluída" : "Pendente";
 
-    li.textContent = 
-        tarefa.titulo + " - " +
-        tarefa.descricao + " - " +
-        tarefa.nome_filho + " - " +
-        status;
+        li.innerHTML = `
+            ${tarefa.titulo} - 
+            ${tarefa.descricao} - 
+            ${tarefa.nome_filho} - 
+            ${status}
+            <button onclick="excluirTarefa(${tarefa.id})">
+                Excluir
+            </button>
+        `;
 
-    lista.appendChild(li);
-});
+        lista.appendChild(li);
+    });
+}
+
+async function excluirTarefa(id) {
+    if (!confirm("Tem certeza que deseja excluir essa tarefa?")) {
+        return;
+    }
+
+    const resposta = await fetch(`/api/tarefas/${id}`, {
+        method: "DELETE"
+    });
+
+    if (!resposta.ok) {
+        alert("Erro ao excluir tarefa");
+        return;
+    }
+
+    const dados = await resposta.json();
+
+    alert(dados.message);
+
+    carregarTarefas();
 }
 
 function logout() {

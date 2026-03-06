@@ -23,16 +23,35 @@ exports.loginMae = async (req, res) => {
     const { email, senha } = req.body;
 
     try {
-        const [maes] = await db.query('SELECT * FROM maes WHERE email = ?', [email]);
-        if (maes.length === 0) return res.status(401).json({ error: 'Credenciais inválidas' });
+        const [maes] = await db.query(
+            'SELECT * FROM maes WHERE email = ?',
+            [email]
+        );
+
+        if (maes.length === 0)
+            return res.status(401).json({ error: 'Credenciais inválidas' });
 
         const mae = maes[0];
 
         const senhaValida = await bcrypt.compare(senha, mae.senha);
-        if (!senhaValida) return res.status(401).json({ error: 'Credenciais inválidas' });
 
-        res.json({ id: mae.id, nome: mae.nome, email: mae.email });
+        if (!senhaValida)
+            return res.status(401).json({ error: 'Credenciais inválidas' });
+
+        // LOG
+        await db.query(
+            "INSERT INTO logs (acao, ip) VALUES (?, ?)",
+            ["login da mãe", req.ip]
+        );
+
+        res.json({
+            id: mae.id,
+            nome: mae.nome,
+            email: mae.email
+        });
+
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: 'Erro no login' });
     }
 };

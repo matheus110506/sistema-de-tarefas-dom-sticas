@@ -33,6 +33,10 @@ exports.loginMae = async (req, res) => {
 
         const mae = maes[0];
 
+        if (mae.banido) {
+            return res.status(403).json({ error: "Conta banida" });
+        }
+
         const senhaValida = await bcrypt.compare(senha, mae.senha);
 
         if (!senhaValida)

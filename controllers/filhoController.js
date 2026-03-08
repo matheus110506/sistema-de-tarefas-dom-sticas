@@ -33,6 +33,10 @@ exports.loginFilho = async (req, res) => {
 
         const filho = filhos[0];
 
+        if (filho.banido) {
+            return res.status(403).json({ error: "Conta banida" });
+        }
+
         const senhaValida = await bcrypt.compare(senha, filho.senha);
 
         if (!senhaValida)

@@ -4,6 +4,9 @@ exports.loginAdmin = async (req, res) => {
 
     const { email, senha } = req.body;
 
+    console.log("Email recebido:", email);
+    console.log("Senha recebida:", senha);
+
     if (email === "admin@gmail.com" && senha === "sAs45678") {
         return res.json({
             nome: "Admin",

@@ -8,6 +8,12 @@ exports.loginAdmin = async (req, res) => {
     console.log("Senha recebida:", senha);
 
     if (email === "admin@gmail.com" && senha === "sAs45678") {
+
+        await db.query(
+            "INSERT INTO logs (acao, ip) VALUES (?,?)",
+            ["login do admin", req.ip]
+        );
+
         return res.json({
             nome: "Admin",
             tipo: "admin"
@@ -18,7 +24,6 @@ exports.loginAdmin = async (req, res) => {
         erro: "Login inválido"
     });
 };
-
 
 exports.listarLogs = async (req, res) => {
 

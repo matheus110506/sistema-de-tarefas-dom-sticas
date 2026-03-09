@@ -5,96 +5,97 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Minhas Tarefas</h1>
 
-    <button onclick="logout()">Sair</button>
+<h1>Minhas Tarefas</h1>
 
-    <ul id="listaTarefas"></ul>
+<button onclick="logout()">Sair</button>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
+<ul id="listaTarefas"></ul>
 
-            const filhoId = Number(localStorage.getItem('filhoId'));
+<script>
 
-            if (!filhoId) {
-                window.location.href = 'login.html';
-                return;
-            }
+document.addEventListener("DOMContentLoaded", function() {
 
-            async function carregarTarefas() {
-                const res = await fetch(`/api/tarefas/filho/${filhoId}`);
+    const filhoId = Number(localStorage.getItem('filhoId'));
 
-                if (!res.ok) {
-                    alert("Erro ao carregar tarefas");
-                    return;
-                }
-
-                const tarefas = await res.json();
-
-                const lista = document.getElementById('listaTarefas');
-                lista.innerHTML = '';
-
-tarefas.forEach(tarefa => {
-    const li = document.createElement('li');
-
-    li.textContent = tarefa.titulo + " - " + tarefa.descricao + " ";
-
-    if (tarefa.concluida) {
-        const span = document.createElement('span');
-        span.textContent = "Concluída";
-        span.style.color = "green";
-        li.appendChild(span);
-    } else {
-        const btn = document.createElement('button');
-        btn.textContent = "Concluir";
-
-        btn.addEventListener('click', async () => {
-            await fetch('/api/tarefas/concluir', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tarefaId: tarefa.id,
-                    filhoId: filhoId
-                })
-            });
-
-            carregarTarefas(); // 🔥 recarrega lista
-        });
-
-        li.appendChild(btn);
+    if (!filhoId) {
+        window.location.href = 'login.html';
+        return;
     }
 
-    lista.appendChild(li);
-});
-            }
+    async function carregarTarefas() {
 
-            window.concluir = async function(tarefaId) {
-                const res = await fetch('/api/tarefas/concluir', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tarefaId: tarefaId,
-                        filhoId: filhoId
-                    })
+        const res = await fetch(`/api/tarefas/filho/${filhoId}`);
+
+        if (!res.ok) {
+            alert("Erro ao carregar tarefas");
+            return;
+        }
+
+        const tarefas = await res.json();
+
+        const lista = document.getElementById('listaTarefas');
+        lista.innerHTML = '';
+
+        tarefas.forEach(tarefa => {
+
+            const li = document.createElement('li');
+
+            li.textContent = tarefa.titulo + " - " + tarefa.descricao + " ";
+
+            if (tarefa.concluida) {
+
+                const span = document.createElement('span');
+                span.textContent = "Concluída";
+                span.style.color = "green";
+
+                li.appendChild(span);
+
+            } else {
+
+                const btn = document.createElement('button');
+                btn.textContent = "Concluir";
+
+                btn.addEventListener('click', async () => {
+
+                    btn.disabled = true; // evita clique duplo
+
+                    const res = await fetch('/api/tarefas/concluir', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tarefaId: tarefa.id,
+                            filhoId: filhoId
+                        })
+                    });
+
+                    if (!res.ok) {
+                        alert("Erro ao concluir tarefa");
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    carregarTarefas();
                 });
 
-                if (!res.ok) {
-                    alert("Erro ao concluir tarefa");
-                    return;
-                }
-
-                alert('Tarefa concluída!');
-                carregarTarefas();
+                li.appendChild(btn);
             }
 
-            window.logout = function() {
-                localStorage.clear();
-                window.location.href = 'login.html';
-            }
-
-            carregarTarefas();
+            lista.appendChild(li);
 
         });
-    </script>
+    }
+
+    window.logout = function() {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    carregarTarefas();
+
+});
+
+</script>
+
 </body>
 </html>

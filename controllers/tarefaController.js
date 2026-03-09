@@ -3,6 +3,11 @@ const db = require('../db');
 exports.criarTarefa = async (req, res) => {
     const { titulo, descricao, maeId, filhoId } = req.body;
 
+    await db.query(
+        "INSERT INTO logs (acao, ip) VALUES (?,?)",
+        ["mãe criou tarefa", req.ip]
+    );
+
     try {
         const [mae] = await db.query('SELECT * FROM maes WHERE id = ?', [maeId]);
         if (mae.length === 0) return res.status(404).json({ error: 'Mãe não encontrada' });
@@ -58,6 +63,11 @@ exports.listarTarefasPorMae = async (req, res) => {
 
 exports.marcarConcluida = async (req, res) => {
     const { tarefaId, filhoId } = req.body;
+
+    await db.query(
+        "INSERT INTO logs (acao, ip) VALUES (?,?)",
+        ["filho concluiu tarefa", req.ip]
+    );
 
     try {
         const [tarefas] = await db.query(

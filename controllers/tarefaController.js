@@ -1,20 +1,28 @@
 const db = require('../db');
 
 exports.criarTarefa = async (req, res) => {
+
     const { titulo, descricao, maeId, filhoId } = req.body;
 
     try {
-        const [mae] = await db.query('SELECT * FROM maes WHERE id = ?', [maeId]);
-        if (mae.length === 0) return res.status(404).json({ error: 'Mãe não encontrada' });
+
+        const [mae] = await db.query(
+            'SELECT id, nome FROM maes WHERE id = ?',
+            [maeId]
+        );
+
+        if (mae.length === 0)
+            return res.status(404).json({ error: 'Mãe não encontrada' });
+
+        const nomeMae = mae[0].nome;
 
         const [filhos] = await db.query(
             'SELECT * FROM filhos WHERE id = ? AND mae_id = ?',
             [filhoId, maeId]
         );
 
-        if (filhos.length === 0) {
+        if (filhos.length === 0)
             return res.status(404).json({ error: 'Filho inválido para esta mãe' });
-        }
 
         const [result] = await db.query(
             'INSERT INTO tarefas (titulo, descricao, mae_id, filho_id) VALUES (?, ?, ?, ?)',
@@ -23,13 +31,21 @@ exports.criarTarefa = async (req, res) => {
 
         await db.query(
             "INSERT INTO logs (acao, ip) VALUES (?,?)",
-            ["mãe criou tarefa", req.ip]
+            [`mãe ${nomeMae} (id ${maeId}) criou tarefa ${titulo} (id ${result.insertId})`, req.ip]
         );
 
-        res.json({ id: result.insertId, titulo, descricao, maeId });
+        res.json({
+            id: result.insertId,
+            titulo,
+            descricao,
+            maeId
+        });
+
     } catch (err) {
+
         console.error(err);
         res.status(500).json({ error: 'Erro ao criar tarefa' });
+
     }
 };
 
@@ -62,33 +78,41 @@ exports.listarTarefasPorMae = async (req, res) => {
 };
 
 exports.marcarConcluida = async (req, res) => {
+
     const { tarefaId, filhoId } = req.body;
 
     try {
+
         const [tarefas] = await db.query(
             'SELECT * FROM tarefas WHERE id = ? AND filho_id = ?',
             [tarefaId, filhoId]
         );
 
-        if (tarefas.length === 0) {
+        if (tarefas.length === 0)
             return res.status(403).json({ error: 'Tarefa não pertence a este filho' });
-        }
 
         await db.query(
             'INSERT IGNORE INTO tarefas_concluidas (filho_id, tarefa_id) VALUES (?, ?)',
             [filhoId, tarefaId]
         );
 
-        await db.query(
-            "INSERT INTO logs (acao, ip) VALUES (?,?)",
-            ["filho concluiu tarefa", req.ip]
+        const [filho] = await db.query(
+            "SELECT nome FROM filhos WHERE id = ?",
+            [filhoId]
         );
+
+    await db.query(
+        "INSERT INTO logs (acao, ip) VALUES (?,?)",
+        [`filho ${filho[0].nome} (id ${filhoId}) concluiu tarefa ${tarefas[0].titulo} (id ${tarefaId})`, req.ip]
+    );
 
         res.json({ message: 'Tarefa marcada como concluída' });
 
     } catch (err) {
+
         console.error(err);
         res.status(500).json({ error: 'Erro ao marcar tarefa' });
+
     }
 };
 
@@ -119,9 +143,11 @@ exports.listarTarefasPorFilho = async (req, res) => {
 };
 
 exports.excluirTarefa = async (req, res) => {
+
     const { id } = req.params;
 
     try {
+
         await db.query(
             'DELETE FROM tarefas_concluidas WHERE tarefa_id = ?',
             [id]
@@ -134,13 +160,15 @@ exports.excluirTarefa = async (req, res) => {
 
         await db.query(
             "INSERT INTO logs (acao, ip) VALUES (?,?)",
-            ["tarefa excluída", req.ip]
+            [`tarefa ${id} excluída`, req.ip]
         );
 
         res.json({ message: 'Tarefa excluída com sucesso' });
 
     } catch (err) {
+
         console.error(err);
         res.status(500).json({ error: 'Erro ao excluir tarefa' });
+
     }
 };
